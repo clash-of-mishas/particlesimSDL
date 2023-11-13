@@ -1,0 +1,107 @@
+ TODO 
+asap:
+Collision detection isn't working properly. Any way to change the velocities 
+of the collided particles without displacing (clamping) them? That would 
+make the particles move so much smoother and faster! We can do this by
+adding another variable to the particle struct, to keep track of
+the particle it is currently colliding away from. We'll have to
+do something similar with all the other particle interactions.
+
+ 
+ - ability for all particles to follow your input. Add
+ another mode to the tapMode enum for the particles to change their
+ direction to your point.
+
+
+ 
+ - add icon to both window and executable file
+ - add gravity - from any angle! Can even be in the middle
+ and 
+ - able to zoom in! maybe scroll on PC?
+ - ability to change speed, size and colour on collision
+ - add minimum rgb values too, for finer control
+ of colour
+ - After everything has been completed, design an GUI 
+ for a "welcome" screen (a new SDL_Window*) and change the options if desired.
+ Options will be saved to a file and read on startup. 
+ When the user exits the window, we close the particles window
+ and return to the welcome screen. Particles will be paused.
+ and on the welcome screen, add an option to wipe all 
+ particles and start afresh
+ - Add pthreads AFTER you have implemented all ideas
+ - add ability for particles to emit an anti-particle on collision,
+ with inverted colour and charge
+ - Anti-particles can be either be absorbed by the "normal"
+ particle on collision OR they can annihilate each other
+ On "normal" and anti-particle collision, it's possible
+ that they release energy  (an implosion as the result
+ of annihilation) that moves all the particle
+ in a radius away
+ - this can be true for a maximum specified value or all of the particles.
+ - Ability to add anti-particles when we generate particles
+ - The range of colour difference of the particle to collide
+ with can be specified, and vice versa for the anti-particle.
+ This makes it possible for the anti-matter to be absorbed
+ by any particle, similar to a photon. Anti-particles can be 
+ bigger or smaller than normal particles.
+ Anti-particles can obey the rules of gravity or not.
+ - Add air friction, to finally make it look like the particles
+ are on Earth, and not in outer space! This means 
+ slowing down their speed every loop. This can be specified as well.
+ - add ability for particles to bond to each other. They
+ can be specified to bond with a particular colour range and
+ can rotate while moving
+ - add mass to each particle, the maximum and minimum
+ can be specified
+ - add charge to each particle! Can be positive, negative
+ or zero. Therefore, we can create a model of an atom,
+ with electrons orbiting around the nucleus.
+ - Charge can be positive, negative or zero.
+ If charge is zero, it won't orbit any other particle.
+ Otherwise, the particle will orbit around the other particle
+ in a maximum and minimum radius.
+ - Colour range to orbit can be specified.
+ And vice versa for anti-particles!
+ - Possibly add one more variables to each particle:
+ IS_ANTIPARTICLE for anti-particles
+ So basically, the colour of the particle will specify
+ the properties and behaviour of that particle.
+ - (possibly) Each particle can be either a boson or a
+ fermion. Fermions only interact with bosons IF they
+ have opposite charges (the boson will orbit around the
+ fermion). Fermions will only interact with each other
+ IF one of them has a opposite charge (an anti-particle annihilation).
+ Bosons will interact with each other if one of them 
+ has the opposite charge (annihilation) or if both charges
+ are the same or in a range (both must not be 0) (emits
+ an anti-particle)
+ This means that any two particle with 0 charge
+ will not interact, similar to photons.
+ - Fermions can be attracted to each other through
+ gravity, and form clusters of fermions. The strength
+ of this attraction is very weak, but noticeable.
+ - Black holes can be formed! It will pull and annihilate all particles
+ in a range.
+ - add ability for fermions of the same charge to
+ bond together (with the help of bosons).
+ - The time taken to absorb or emit particles can be changed
+ - add a cool animation for absorbing or emitting particles
+ - On a collision where a particle is emitted, the particle
+ that emits the new particle slows down a bit - this value 
+ can, again, be adjusted. And vice versa for absorbing
+ particles.
+ - Center of gravity can either be a point on the screen,
+ a line, a part of the screen up to a certain x or y or 
+ a moving line moving in an interesting way
+ - Add ability for gravity to be a sine wave (with varying
+ minimum and maximum amplitude and frequency)
+ - collision updater can run in its own thread and 
+ detector / simply moving threads in a different one. 
+ How many threads run them can be based on thread availability
+ and number of particles colliding.
+ - OPTIMISE OPTIMISE OPTIMISE!
+ - make sure that the code is readable, neat and not longer than a 
+ specific lengthhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+ - compile for android when done! Use the same icon.
+ - Make sure the code is READABLE! This means no stupidly small
+ variable names.

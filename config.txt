@@ -1,0 +1,100 @@
+# This file is used by particlesimSDL to specify the options
+
+# Lines that start with a # is a comment and gets ignored
+# Numerical options must be set (ie, not a comment or empty)
+# Variable names must be totally different from each other
+# ie, one name must be not a part of another.
+# Feel free to modify these settings, but beware, the program is fussy
+# about the formatting!
+
+# The maximum amount of particles to add each frame
+# (Must be bigger than 1)
+# (Changing this value will affect performance)
+MAX_PARTICLE_COUNT 10
+
+# The maximum and minimum speed of particles, in pixels per second
+MAX_PARTICLE_SPEED 1000
+MIN_PARTICLE_SPEED 0
+
+# The maximum amount of direction relative to 0 degree to start at
+# (0 degree is facing up)
+MAX_DIRECTION 360
+
+# Start the program with particles already present
+#ENABLE_STARTING_PARTICLES
+
+# If enabled, the program will stop when each frame takes 
+# longer than MAX_BENCHMARK_SPF seconds to render and write 
+# to this file
+#ENABLE_BENCHMARK
+MAX_BENCHMARK_SPF 1
+
+# Add particles each frame
+# (Enabling this option affects performance)
+#ENABLE_AUTO_ADD_PARTICLES
+
+# If enabled, particles will be drawn as circles instead of individual pixels
+# Minimum and maximum values specify the diameter of each circle, in pixels
+# (Enabling this option affects performance)
+ENABLE_CIRCLE_PARTICLES
+# If enabled, each circle will be filled. By default they are outlined
+# Ignored if ENABLE_CIRCLE_PARTICLES is disabled
+# (Enabling this option affects performance)
+ENABLE_CIRCLE_FILLED
+# (Must be bigger than zero)
+# (Changing these two values will affect performance)
+
+# If enabled, particles will collide with window border
+# (Enabling this option affects performance)
+ENABLE_BORDER_COLLISION
+
+# If enabled, each particle's position will be clamped to
+# inside the window border, so they will never
+# move out of the window
+# (Enabling this option affects performance)
+ENABLE_BORDER_CLAMP
+
+# If enabled, particles will collide with each other
+# (Enabling this option affects performance)
+ENABLE_PARTICLE_COLLISION
+
+# Specify the maximum amount of memory to allocate for particlemuSDL, in bytes.
+# If commented out, default is 32768 (32 KiB)
+MAX_MEMORY_ALLOCATION 1048576
+
+# Set the background colour
+# Must be between 0-255
+BACKGROUND_COL_R 10
+BACKGROUND_COL_G 10
+BACKGROUND_COL_B 20
+
+# If enabled, when the user taps the screen or holds
+# the left mouse button down, only one particle is added.
+# If disabled, particles will be added constantly until
+# you release.
+ENABLE_GENERATE_ONCE
+
+# Set the padding of the buttons
+# (Must be an integer value)
+BUTTON_PADDING 20
+
+# Set the transparency level of buttons
+# Must be between 0-255
+BUTTON_TRANSPARENCY 96
+
+# Set the colour of buttons
+BUTTON_COL_R 128
+BUTTON_COL_G 128
+BUTTON_COL_B 128
+
+# Set the width and height of the window
+# Must be integer
+# Ignored on Android, the dimensions is set to the actual screen's dimensions
+WINDOW_WIDTH 1280
+WINDOW_HEIGHT 720
+
+# Friction is the amount of energy that every particle
+# loses with time (ie, slowing down). More massive particles have
+# more energy, so their magnitudes (speed) decreases at a slower rate.
+# In units of 1 mass/pixels/sec
+FRICTION 0.0001
