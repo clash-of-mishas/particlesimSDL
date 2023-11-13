@@ -107,6 +107,7 @@ typedef struct particle {
 } particle;
 
 // what to do on mouse button down / finger tap
+// more will be added later
 typedef enum tapMode{
 	
 	addParticle,
@@ -119,7 +120,7 @@ static int length;
 
 // the restrict keyword tells the compiler that
 // this pointer will never change - ie, this pointer wil be pointing
-// at the same block of memory for the entirety of the program's life,
+// at the same address for the entirety of the program's life,
 // allowing the compiler to do optimisations on it
 static particle* restrict particles;
 
@@ -130,7 +131,7 @@ static int bondLength;
 static int* restrict bonding;
 
 // needed to convert degrees to radians
-static const double halfPi = (double)M_PI / 180.0;
+static const double halfPi = M_PI / 180.0;
 
 // our particle window
 static SDL_Window* win;
@@ -144,10 +145,10 @@ static double delta;
 // file to read the options from
 static FILE* config;
 
-// our actual options struct
+// our options struct
 static configOptions* restrict options;
 
-// keeps track if the simulation window is open
+// keeps track if the particle window is open
 static char isRunning;
 
 // keeps track if the particles are moving or paused
@@ -169,13 +170,13 @@ static tapMode mode;
 // the user has selected a particle to change velocity
 static int selectedParticle;
 
-// the valocity to change the selected particle to
+// the velocity to change the selected particle to
 static double velocityXToChange, velocityYToChange;
 
-// we need to know where the user has pressed
+// we need to know where on the window the user has pressed
 static SDL_Event mouseDown;
 
-// used for debugging (writing to file)
+// used for debugging
 static FILE* restrict debug;
 
 // draw a circle, outlined or filled, for each particle.
@@ -214,7 +215,7 @@ static inline void drawCircle(int particleNum, int xPos, int yPos, int diameter,
 		
 		// instead of drawing pixels around the circle, we draw lines
 		// through the circle
-		if(options->ENABLE_CIRCLE_FILLED && filled){
+		if(filled){
 			
 			SDL_RenderDrawLine(winRend, centreX - x, centreY - y, centreX + x, centreY - y);
 			SDL_RenderDrawLine(winRend, centreX - x, centreY + y, centreX + x, centreY + y);
@@ -1367,8 +1368,7 @@ static inline void drawParticles(){
 	// draw particles
 	for(int i = 0; i < length; i++){
 		
-		// if particles are outside of our viewing area, then we don't 
-		// need to draw it
+		// if a particle is outside of the window border, then we don't need to draw it
 		if(((particles[i].x + (0.5 * particles[i].size )) < 0.0) || ((particles[i].x - (0.5 * particles[i].size)) > options->WINDOW_WIDTH)){ continue; }
 		if(((particles[i].y + (0.5 * particles[i].size)) < 0.0) || ((particles[i].y - (0.5 * particles[i].size)) > options->WINDOW_HEIGHT)){ continue; }
 		
@@ -1379,7 +1379,7 @@ static inline void drawParticles(){
 		// otherwise, draw a pixel
 		if(options->ENABLE_CIRCLE_PARTICLES){
 			
-			drawCircle(i, -1, -1, 0, 1);
+			drawCircle(i, -1, -1, 0, options->ENABLE_CIRCLE_FILLED);
 			
 		}
 		
@@ -1449,7 +1449,7 @@ int main(int argc, char** argv){
 	SDL_SetWindowTitle(win, "Particle Simulator v1.0");
 	
 	// we need to tell SDL that we wanna add transparency to our renderer,
-	// because the buttons will be transparent
+	// because the buttons will be slightly transparent
 	SDL_SetRenderDrawBlendMode(winRend, SDL_BLENDMODE_BLEND);
 	
 	// initialise with 0
@@ -1687,7 +1687,7 @@ int main(int argc, char** argv){
 			
 		}
 		
-		// add particles every frame
+		// add particles every frame, regardless of input from user
 		if(options->ENABLE_AUTO_ADD_PARTICLES){
 			
 			generateRandomParticles(-1, -1);
@@ -1734,22 +1734,15 @@ int main(int argc, char** argv){
 			
 			// will stop the program when the FPS drops below 
 			// the specified amount and writes the amount of 
-			// particles to config.txt, the amount of memory used
-			// and the minimum/maximum particle sizes, if applicable
+			// particles to a file called benchmark.txt, the amount of memory used
+			// and the the amount of different particles we have
 			if(delta > options->MAX_BENCHMARK_SPF){
 				
-				config = fopen("config.txt", "a+");
-				fprintf(config, "\n\n%s%.2f%s%d\n", "Number of particles visible at ", options->MAX_BENCHMARK_SPF, " seconds per frame: ", length);
-				fprintf(config, "%s%d%s\n", "Size of each particle: ", (int)sizeof(particle), " bytes");
-				fprintf(config, "%s%d%s\n", "Memory used: ", (int)(sizeof(particle) * (size_t)length), " bytes");
+				FILE* benchmark = fopen("benchmark.txt", "w+");
+				fprintf(benchmark, "\n%s%.2f%s%d\n", "Number of particles visible at ", options->MAX_BENCHMARK_SPF, " seconds per frame: ", length);
+				fprintf(benchmark, "%s%d%s\n", "Memory used: ", (int)(sizeof(particle) * (size_t)length), " bytes");
 				
-				if(options->ENABLE_CIRCLE_PARTICLES){
-					
-					fprintf(config, "%s%d\n", "Number of particle types: ", (int)sizeof(particleType));
-					
-				}
-				
-				fclose(config);
+				fclose(benchmark);
 				isRunning = 0;
 				
 			}

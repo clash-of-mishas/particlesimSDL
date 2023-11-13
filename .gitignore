@@ -1,3 +1,5 @@
-particlesimSDL.exe
+*.exe
 
 debug.txt
+
+benchmark.txt

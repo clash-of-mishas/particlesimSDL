@@ -8,24 +8,25 @@
 # about the formatting!
 
 # The maximum amount of particles to add each frame
+# Ignored if ENABLE_GENERATE_ONCE is set
 # (Must be bigger than 1)
+# (Must be integer)
 # (Changing this value will affect performance)
 MAX_PARTICLE_COUNT 10
 
-# The maximum and minimum speed of particles, in pixels per second
+# The maximum and minimum speed of particles to start with, in pixels per second
 MAX_PARTICLE_SPEED 1000
 MIN_PARTICLE_SPEED 0
 
 # The maximum amount of direction relative to 0 degree to start at
 # (0 degree is facing up)
-MAX_DIRECTION 360
+MAX_DIRECTION 0
 
 # Start the program with particles already present
 #ENABLE_STARTING_PARTICLES
 
 # If enabled, the program will stop when each frame takes 
-# longer than MAX_BENCHMARK_SPF seconds to render and write 
-# to this file
+# longer than MAX_BENCHMARK_SPF seconds to render and write to a file
 #ENABLE_BENCHMARK
 MAX_BENCHMARK_SPF 1
 
