@@ -105,3 +105,11 @@ do something similar with all the other particle interactions.
  - compile for android when done! Use the same icon.
  - Make sure the code is READABLE! This means no stupidly small
  variable names.
+ - maybe use SDL_GetCPUCacheLineSize() in some way to make the execution
+ of the program faster. For example, we could pad all the data tightly 
+ together into the size of the cache so that the cpu will never get a 
+ cache miss
+ 
+ - floats/doubles can be negative zero???????? The fuck?? We'll have to check for that now, ughhhh.
+ Floats and doubles are extremely sneaky, they can very easily fall into the NaN range and crash
+ your program like a bus hitting a toddler

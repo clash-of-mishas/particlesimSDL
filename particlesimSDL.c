@@ -71,7 +71,7 @@ const char optStr35[] = "FRICTION";
 // forces, and interact with each other in unique ways.
 // particles can change into a different type, emit,
 // absorb, bond or be annihilated depending on the type
-typedef enum particleType{
+typedef enum {
 	
 	red_particle,
 	blue_particle,
@@ -108,7 +108,7 @@ typedef struct particle {
 
 // what to do on mouse button down / finger tap
 // more will be added later
-typedef enum tapMode{
+typedef enum{
 	
 	addParticle,
 	changeVelocity
