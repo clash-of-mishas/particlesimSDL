@@ -20,7 +20,7 @@ MIN_PARTICLE_SPEED 0
 
 # The maximum amount of direction relative to 0 degree to start at
 # (0 degree is facing up)
-MAX_DIRECTION 0
+MAX_DIRECTION 360
 
 # Start the program with particles already present
 #ENABLE_STARTING_PARTICLES

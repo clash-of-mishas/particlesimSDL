@@ -628,7 +628,7 @@ static inline void generateRandomParticles(int x, int y){
 				particles[i].r = 255.0;
 				particles[i].g = 0.0;
 				particles[i].b = 0.0;
-				particles[i].size = 50.0; //40.0;
+				particles[i].size = 20.0;
 				particles[i].mass = 1.0;
 				
 				// red is large, and light
@@ -640,7 +640,7 @@ static inline void generateRandomParticles(int x, int y){
 				particles[i].r = 0.0;
 				particles[i].g = 0.0;
 				particles[i].b = 255.0;
-				particles[i].size = 50.0;
+				particles[i].size = 25.0;
 				particles[i].mass = 1.2f;
 				
 				// blue is larger, and a bit heavier
@@ -652,7 +652,7 @@ static inline void generateRandomParticles(int x, int y){
 				particles[i].r = 0.0;
 				particles[i].g = 255.0;
 				particles[i].b = 0.0;
-				particles[i].size = 50.0; //15.0;
+				particles[i].size = 10.0;
 				particles[i].mass = 0.01f;
 				
 				// green is small and very light
@@ -664,8 +664,8 @@ static inline void generateRandomParticles(int x, int y){
 				particles[i].r = 255.0;
 				particles[i].g = 255.0;
 				particles[i].b = 0.0;
-				particles[i].size = 50.0; //10.0;
-				particles[i].mass = 1000.0; //10.0;
+				particles[i].size = 5.0;
+				particles[i].mass = 10.0;
 				
 				// yellow is very small and very heavy 
 				
@@ -676,7 +676,7 @@ static inline void generateRandomParticles(int x, int y){
 				particles[i].r = 255.0;
 				particles[i].g = 0.0;
 				particles[i].b = 255.0;
-				particles[i].size = 50.0; //5.0;
+				particles[i].size = 2.0;
 				particles[i].mass = 0.0001f;
 				
 				// pink is extremely small and extremely light
@@ -732,6 +732,8 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
 					
+					particles[particleNum].collidingWith = -1;
+					
 				}
 				
 				if(options->ENABLE_BORDER_CLAMP){
@@ -748,6 +750,8 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityX > 0.0){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
+					
+					particles[particleNum].collidingWith = -1;
 					
 				}
 				
@@ -766,6 +770,8 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
 					
+					particles[particleNum].collidingWith = -1;
+					
 				}
 				
 				if(options->ENABLE_BORDER_CLAMP){
@@ -782,6 +788,8 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityY > 0.0){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
+					
+					particles[particleNum].collidingWith = -1;
 					
 				}
 				
@@ -823,9 +831,6 @@ static inline char isBonding(int particleNum, int particleNumTo){
 // that only exchanges kinetic energy on collison)
 static inline void handleElasticCollision(int particleNumA, int particleNumB, double distance){
 	
-	// get the normal vector between the two particles
-	double nx = (particles[particleNumB].x - particles[particleNumA].x) / distance;
-	double ny = (particles[particleNumB].y - particles[particleNumA].y) / distance;
 	double velXA = particles[particleNumA].velocityX;
 	double velYA = particles[particleNumA].velocityY;
 	double velXB = particles[particleNumB].velocityX;
@@ -836,6 +841,11 @@ static inline void handleElasticCollision(int particleNumA, int particleNumB, do
 	// stolen from Javidx9's circle vs circle collision video, thanks! :)
 	// some sort of maths magic going on here.... I have no idea what's
 	// happening but it works great
+	
+	// get the normal vector between the two particles
+	double nx = (particles[particleNumB].x - particles[particleNumA].x) / distance;
+	double ny = (particles[particleNumB].y - particles[particleNumA].y) / distance;
+	
 	double kx = (velXA - velXB);
 	double ky = (velYA - velYB);
 	double p = 2.0 * (nx * kx + ny * ky) / (massA + massB);
@@ -862,7 +872,11 @@ static inline void handleParticleCollision(){
 		// loop through all particles checking for collision
 		for(int i = 0; i < length; i++){
 			
+			char iHasCollided = 0;
+			
 			for(int j = 0; j < length; j++){
+				
+				char jHasCollided = 0;
 			
 				if(i != j){
 					
@@ -878,24 +892,43 @@ static inline void handleParticleCollision(){
 					// getting the distance with good old Pythagoras' Theorem
 					double distance = sqrt((((xa - xb) * (xa - xb)) + ((ya - yb) * (ya - yb))));
 					
-					fprintf(debug, "distance: %f\n", distance);
-					
-					
-					
 					// check if the distance between them is
 					// less than their radiuses combined
 					// the + 1 is for floating point error
 					if(distance < (radiusA + radiusB + 1.0)){
 						
-						handleElasticCollision(i, j, distance);
-					
+						if((particles[i].collidingWith == -1) && (particles[j].collidingWith == -1)){
+							
+							// change ONLY the velocities for both particles
+							handleElasticCollision(i, j, distance);
+							
+							particles[i].collidingWith = j;
+							particles[j].collidingWith = i;
+							
+							iHasCollided = 1;
+							jHasCollided = 1;
+							
+							break;
+							
+						}
 						
 					}
 					
 				}
 				
+				if (!jHasCollided){
+					
+					particles[j].collidingWith = -1;
+					
+				}
+				
 			}
 			
+			if (!iHasCollided){
+				
+				particles[i].collidingWith = -1;
+				
+			}
 			
 		}
 		
