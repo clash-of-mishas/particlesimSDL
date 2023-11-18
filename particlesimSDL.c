@@ -103,6 +103,7 @@ typedef struct particle {
 	particleType type;
 	
 	int collidingWith;
+	int bondingWith;
 	
 } particle;
 
@@ -539,7 +540,7 @@ static inline void drawChangeVelocityIcon(){
 // stores the state for the PRNG
 unsigned int randState;
 
-// generate a random number between 0 and 2^32
+// generate a pseudo random number between 0 and 2^32
 // Uses the xorshift32 algorithm, and is thread safe
 static inline unsigned int randu(unsigned int* seed){
 	
@@ -705,6 +706,7 @@ static inline void generateRandomParticles(int x, int y){
 		particles[i].velocityY = sin(direction * halfPi) * speed;
 		
 		particles[i].collidingWith = -1;
+		particles[i].bondingWith = -1;
 
 	}
 	
@@ -732,6 +734,12 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
 					
+					if(particles[particleNum].bondingWith > -1){
+						
+						particles[particles[particleNum].bondingWith].velocityX = -particles[particles[particleNum].bondingWith].velocityX;
+						
+					}
+					
 					particles[particleNum].collidingWith = -1;
 					
 				}
@@ -750,6 +758,12 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityX > 0.0){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
+					
+					if(particles[particleNum].bondingWith > -1){
+						
+						particles[particles[particleNum].bondingWith].velocityX = -particles[particles[particleNum].bondingWith].velocityX;
+						
+					}
 					
 					particles[particleNum].collidingWith = -1;
 					
@@ -770,6 +784,12 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
 					
+					if(particles[particleNum].bondingWith > -1){
+						
+						particles[particles[particleNum].bondingWith].velocityY = -particles[particles[particleNum].bondingWith].velocityY;
+						
+					}
+					
 					particles[particleNum].collidingWith = -1;
 					
 				}
@@ -788,6 +808,12 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityY > 0.0){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
+					
+					if(particles[particleNum].bondingWith > -1){
+						
+						particles[particles[particleNum].bondingWith].velocityY = -particles[particles[particleNum].bondingWith].velocityY;
+						
+					}
 					
 					particles[particleNum].collidingWith = -1;
 					
@@ -860,6 +886,20 @@ static inline void handleElasticCollision(int particleNumA, int particleNumB, do
 	particles[particleNumB].velocityX = velXB;
 	particles[particleNumB].velocityY = velYB;
 	
+	if(particles[particleNumA].bondingWith > -1){
+		
+		particles[particles[particleNumA].bondingWith].velocityX = velXA;
+		particles[particles[particleNumA].bondingWith].velocityY = velYA;
+		
+	}
+	
+	if(particles[particleNumB].bondingWith > -1){
+		
+		particles[particles[particleNumB].bondingWith].velocityX = velXB;
+		particles[particles[particleNumB].bondingWith].velocityY = velYB;
+		
+	}
+	
 	return;
 	
 }
@@ -872,13 +912,17 @@ static inline void handleParticleCollision(){
 		// loop through all particles checking for collision
 		for(int i = 0; i < length; i++){
 			
-			char iHasCollided = 0;
+			char hasCollided = 0;
 			
 			for(int j = 0; j < length; j++){
-				
-				char jHasCollided = 0;
 			
 				if(i != j){
+					
+					if(particles[i].bondingWith == j){
+						
+						continue;
+						
+					}
 					
 					// copy to the stack for faster processing & syntatic sugar :P
 					double xa = particles[i].x;
@@ -892,41 +936,154 @@ static inline void handleParticleCollision(){
 					// getting the distance with good old Pythagoras' Theorem
 					double distance = sqrt((((xa - xb) * (xa - xb)) + ((ya - yb) * (ya - yb))));
 					
+					// when red and blue particles bond, their velocities become the average
+					double avgVelX, avgVelY;
+					
 					// check if the distance between them is
 					// less than their radiuses combined
 					// the + 1 is for floating point error
 					if(distance < (radiusA + radiusB + 1.0)){
 						
+						switch (particles[i].type){
+						
+							case red_particle:
+								
+								if(particles[j].type == red_particle){
+									
+									goto repel;
+									
+								}
+								
+								if(particles[j].type == blue_particle){
+									
+									if(particles[i].bondingWith == -1 && particles[j].bondingWith == -1){
+										
+										goto bond;
+										
+									}
+									
+									else{
+										
+										goto repel;
+										
+									}
+									
+								}
+								
+								break;
+								
+							case blue_particle:
+								
+								if(particles[j].type == blue_particle){
+									
+									goto repel;
+									
+								}
+								
+								if(particles[j].type == red_particle){
+									
+									if(particles[i].bondingWith == -1 && particles[j].bondingWith == -1){
+										
+										goto bond;
+											
+									}
+									
+									else{
+										
+										goto repel;
+										
+									}
+									
+								}
+								
+								break;
+								
+							case green_particle:
+								
+								break;
+								
+							case yellow_particle:
+								
+								break;
+								
+							case pink_particle:
+								
+								break;
+								
+							default:
+								
+								break;
+								
+						}
+						
+						continue;
+						
+						
+						
+						// particle repulsion ----------------------------------NOT WORKING
+						repel:
+						
 						if((particles[i].collidingWith == -1) && (particles[j].collidingWith == -1)){
-							
-							// change ONLY the velocities for both particles
-							handleElasticCollision(i, j, distance);
 							
 							particles[i].collidingWith = j;
 							particles[j].collidingWith = i;
 							
-							iHasCollided = 1;
-							jHasCollided = 1;
+							// we also want to move the particles' bonded particles
+							if(particles[i].bondingWith > -1){
+								
+								particles[particles[i].bondingWith].collidingWith = j;
+								
+							}
 							
-							break;
+							if(particles[j].bondingWith > -1){
+								
+								particles[particles[j].bondingWith].collidingWith = i;
+								
+							}
+							
+							hasCollided = 1;
+							
+							// change ONLY the velocities for both particles
+							handleElasticCollision(i, j, distance);
 							
 						}
+						
+						break;
+						
+						
+						
+						// red-blue particles bonding
+						bond:
+						
+						// the new velocities of the particles will be the average of both old ones
+						avgVelX = (particles[i].velocityX + particles[j].velocityX) / 2.0;
+						avgVelY = (particles[i].velocityY + particles[j].velocityY) / 2.0;
+						
+						particles[i].velocityX = avgVelX;
+						particles[i].velocityY = avgVelY;
+						particles[j].velocityX = avgVelX;
+						particles[j].velocityY = avgVelY;
+						
+						particles[i].bondingWith = j;
+						particles[j].bondingWith = i;
+						
+						continue;
 						
 					}
 					
 				}
 				
-				if (!jHasCollided){
-					
-					particles[j].collidingWith = -1;
-					
-				}
-				
 			}
 			
-			if (!iHasCollided){
+			if (!hasCollided){ // ----------------------------------NOT WORKING
 				
 				particles[i].collidingWith = -1;
+				
+				if(particles[i].bondingWith > -1){
+					
+					particles[particles[i].bondingWith].collidingWith = -1;
+					
+				}
 				
 			}
 			
@@ -955,13 +1112,27 @@ static inline void updateParticles(){
 		
 			// if both velocities are already at zero, no need to reduce them anymore, otherwise sqrt() will
 			// return an undefined double
-			if((particles[particleNum].velocityX != 0) && (particles[particleNum].velocityY != 0)){
+			if((particles[particleNum].velocityX != 0.0) && (particles[particleNum].velocityY != 0.0)){
 				
 				// reduce the speed of the vector by the friction * mass
 				double speed = sqrt((particles[particleNum].velocityX * particles[particleNum].velocityX) +
 					(particles[particleNum].velocityY * particles[particleNum].velocityY));
 				
-				double speedToReduce = (1.0 / particles[particleNum].mass) * options->FRICTION;
+				double speedToReduce;
+				
+				if(particles[particleNum].bondingWith > -1){
+					
+					double totalMass = particles[particleNum].mass + particles[particles[particleNum].bondingWith].mass;
+					
+					speedToReduce = (1.0 / totalMass) * options->FRICTION;
+					
+				}
+				
+				else{
+					
+					speedToReduce = (1.0 / particles[particleNum].mass) * options->FRICTION;
+					
+				}
 				
 				// we need to check if the velocity has hit zero, if so, then stop drcreasing the magnitude
 				char zero = particles[particleNum].velocityX > 0.0;
@@ -973,6 +1144,8 @@ static inline void updateParticles(){
 					particles[particleNum].velocityX = 0.0;
 					
 				}
+				
+				
 				
 				zero = particles[particleNum].velocityY > 0.0;
 				

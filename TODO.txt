@@ -1,14 +1,9 @@
  TODO 
 asap:
-Collision detection isn't working properly. Any way to change the velocities 
-of the collided particles without displacing (clamping) them? That would 
-make the particles move so much smoother and faster! We can do this by
-adding another variable to the particle struct, to keep track of
-the particle it is currently colliding away from. We'll have to
-do something similar with all the other particle interactions.
+
 
  
- - ability for all particles to follow your input. Add
+ - ability for all particles to change their directions to your input. Add
  another mode to the tapMode enum for the particles to change their
  direction to your point.
 
@@ -16,7 +11,6 @@ do something similar with all the other particle interactions.
  
  - add icon to both window and executable file
  - add gravity - from any angle! Can even be in the middle
- and 
  - able to zoom in! maybe scroll on PC?
  - ability to change speed, size and colour on collision
  - add minimum rgb values too, for finer control
