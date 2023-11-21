@@ -886,6 +886,10 @@ static inline void handleElasticCollision(int particleNumA, int particleNumB, do
 	particles[particleNumB].velocityX = velXB;
 	particles[particleNumB].velocityY = velYB;
 	
+	
+	// also collide with bonded particles
+	// The particles have spin 0 for now, which means that they don't rotate. Therefore, any collision
+	// affect both particles equally
 	if(particles[particleNumA].bondingWith > -1){
 		
 		particles[particles[particleNumA].bondingWith].velocityX = velXA;
@@ -927,7 +931,7 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 			
 				if(i != j){
 					
-					if(particles[i].bondingWith == j){
+					if(particles[i].bondingWith == j || particles[j].bondingWith == i){
 						
 						continue;
 						
@@ -1076,6 +1080,11 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 						particles[i].velocityY = avgVelY;
 						particles[j].velocityX = avgVelX;
 						particles[j].velocityY = avgVelY;
+						
+						double temp = particles[i].mass;
+						
+						particles[i].mass += particles[j].mass + particles[j].mass;
+						particles[j].mass += temp + temp;
 						
 						particles[i].bondingWith = j;
 						particles[j].bondingWith = i;

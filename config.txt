@@ -12,7 +12,7 @@
 # (Must be bigger than 1)
 # (Must be integer)
 # (Changing this value will affect performance)
-MAX_PARTICLE_COUNT 10
+MAX_PARTICLE_COUNT 2
 
 # The maximum and minimum speed of particles to start with, in pixels per second
 MAX_PARTICLE_SPEED 1000
@@ -53,7 +53,7 @@ ENABLE_BORDER_COLLISION
 # inside the window border, so they will never
 # move out of the window
 # (Enabling this option affects performance)
-ENABLE_BORDER_CLAMP
+#ENABLE_BORDER_CLAMP
 
 # If enabled, particles will collide with each other
 # (Enabling this option affects performance)
