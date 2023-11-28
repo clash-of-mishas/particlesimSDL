@@ -931,7 +931,7 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 			
 				if(i != j){
 					
-					if(particles[i].bondingWith == j || particles[j].bondingWith == i){
+					if(particles[i].bondingWith == j){
 						
 						continue;
 						
@@ -951,7 +951,7 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 					
 					if(lowestDistance < 0.0){
 						
-						lowestDistance = distance + 1.0;
+						lowestDistance = distance;
 						
 					}
 					
@@ -1099,11 +1099,21 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 			
 			if(hasCollided == 0){
 				
-				particles[i].collidingWith = -1;
-				
 				if(particles[i].bondingWith > -1){
 					
-					particles[particles[i].bondingWith].collidingWith = -1;
+					if(particles[particles[i].bondingWith].collidingWith == -1){
+						
+						particles[i].collidingWith = -1;
+						particles[particles[i].bondingWith].collidingWith = -1;
+						
+					}
+					
+				}
+				
+				else{
+					
+					particles[i].collidingWith = -1;
+					
 					
 				}
 				
@@ -1885,6 +1895,7 @@ int main(int argc, char** argv){
 						
 						if(particles[selectedParticle].bondingWith > -1){
 							
+							// Equal amounts of force are put on both particles in a single bond
 							particles[particles[selectedParticle].bondingWith].velocityX = velocityXToChange;
 							particles[particles[selectedParticle].bondingWith].velocityY = velocityYToChange;
 							
