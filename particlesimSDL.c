@@ -102,7 +102,11 @@ typedef struct particle {
 	
 	particleType type;
 	
-	int collidingWith;
+	int nearestNeighbour;
+	double nearestNeighbourDistance;
+	
+	int lastNearestNeighbour;
+	
 	int bondingWith;
 	
 } particle;
@@ -705,7 +709,11 @@ static inline void generateRandomParticles(int x, int y){
 		particles[i].velocityX = cos(direction * halfPi) * speed;
 		particles[i].velocityY = sin(direction * halfPi) * speed;
 		
-		particles[i].collidingWith = -1;
+		particles[i].nearestNeighbour = -1;
+		particles[i].nearestNeighbourDistance = 0.0;
+		
+		particles[i].lastNearestNeighbour = -1;
+		
 		particles[i].bondingWith = -1;
 
 	}
@@ -733,12 +741,14 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityX < 0.0){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
-					particles[particleNum].collidingWith = -1;
+					particles[particleNum].nearestNeighbour = -1;
+					particles[particleNum].lastNearestNeighbour = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityX = -particles[particles[particleNum].bondingWith].velocityX;
-						particles[particles[particleNum].bondingWith].collidingWith = -1;
+						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
 						
 					}
 					
@@ -758,12 +768,14 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityX > 0.0){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
-					particles[particleNum].collidingWith = -1;
+					particles[particleNum].nearestNeighbour = -1;
+					particles[particleNum].lastNearestNeighbour = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityX = -particles[particles[particleNum].bondingWith].velocityX;
-						particles[particles[particleNum].bondingWith].collidingWith = -1;
+						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
 						
 					}
 					
@@ -783,12 +795,14 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityY < 0.0){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
-					particles[particleNum].collidingWith = -1;
+					particles[particleNum].nearestNeighbour = -1;
+					particles[particleNum].lastNearestNeighbour = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityY = -particles[particles[particleNum].bondingWith].velocityY;
-						particles[particles[particleNum].bondingWith].collidingWith = -1;
+						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
 						
 					}
 					
@@ -808,12 +822,14 @@ static inline void handleBorderCollision(){
 				if(particles[particleNum].velocityY > 0.0){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
-					particles[particleNum].collidingWith = -1;
+					particles[particleNum].nearestNeighbour = -1;
+					particles[particleNum].lastNearestNeighbour = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityY = -particles[particles[particleNum].bondingWith].velocityY;
-						particles[particles[particleNum].bondingWith].collidingWith = -1;
+						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
 						
 					}
 					
@@ -886,7 +902,6 @@ static inline void handleElasticCollision(int particleNumA, int particleNumB, do
 	particles[particleNumB].velocityX = velXB;
 	particles[particleNumB].velocityY = velYB;
 	
-	
 	// also collide with bonded particles
 	// The particles have spin 0 for now, which means that they don't rotate. Therefore, any collision
 	// affect both particles equally
@@ -896,9 +911,8 @@ static inline void handleElasticCollision(int particleNumA, int particleNumB, do
 		particles[particles[particleNumA].bondingWith].velocityY = velYA;
 		
 	}
-	
-	if(particles[particleNumB].bondingWith > -1){
 		
+	if(particles[particleNumB].bondingWith > -1){
 		particles[particles[particleNumB].bondingWith].velocityX = velXB;
 		particles[particles[particleNumB].bondingWith].velocityY = velYB;
 		
@@ -908,29 +922,136 @@ static inline void handleElasticCollision(int particleNumA, int particleNumB, do
 	
 }
 
+// handle red and blue particle bonding
+static inline void handleRedBlueBond(int i, int j){
+	
+	// the new velocities of the particles will be the average of both old ones
+	double avgVelX = (particles[i].velocityX + particles[j].velocityX) / 2.0;
+	double avgVelY = (particles[i].velocityY + particles[j].velocityY) / 2.0;
+	
+	particles[i].velocityX = avgVelX;
+	particles[i].velocityY = avgVelY;
+	particles[j].velocityX = avgVelX;
+	particles[j].velocityY = avgVelY;
+	
+	double temp = particles[i].mass;
+	
+	particles[i].mass += particles[j].mass;
+	particles[j].mass += temp;
+	
+	particles[i].bondingWith = j;
+	particles[j].bondingWith = i;
+	
+}
+
+// handle particle repulsion
+// Assume that I is the closest to J.
+static inline void handleCollision(){
+	
+	for(int i = 0; i < length; i++){
+		
+		if(particles[i].nearestNeighbour == -1) continue;
+		
+		// both particles aren't bonded, but we still need to check if the other particle is closer to another.
+		if((particles[i].bondingWith == -1) && (particles[particles[i].nearestNeighbour].bondingWith == -1)){
+			
+			if(particles[i].lastNearestNeighbour != particles[i].nearestNeighbour){
+				
+				handleElasticCollision(i, particles[i].nearestNeighbour, particles[i].nearestNeighbourDistance);
+				
+				particles[i].lastNearestNeighbour = particles[i].nearestNeighbour;
+				
+				//particles[particles[i].nearestNeighbour].lastNearestNeighbour = i;
+				
+			}
+			
+		}
+
+	}
+	
+	/*
+	
+	// particle I is bonded, while J is not
+	else if(particles[i].bondingWith > -1 && particles[j].bondingWith == -1){
+		
+		if(particles[particles[i].bondingWith].nearestNeighbour > -1){
+			
+			// we need to ckeck if our bonded particle is closer to another particle
+			if(particles[i].nearestNeighbourDistance < particles[particles[i].bondingWith].nearestNeighbourDistance){
+				
+				handleElasticCollision(i, j, particles[i].nearestNeighbour);
+				
+			}
+			
+		}
+		
+		else{
+			
+			handleElasticCollision(i, j, particles[i].nearestNeighbour);
+			
+		}
+		
+	}
+	
+	// vice versa
+	else if(particles[i].bondingWith == -1 && particles[j].bondingWith > -1){
+		
+		if(particles[particles[j].bondingWith].nearestNeighbour > -1){
+			
+			// we need to ckeck if our bonded particle is closer to another particle
+			if(particles[i].nearestNeighbourDistance < particles[particles[j].bondingWith].nearestNeighbourDistance){
+				
+				if(particles[i].nearestNeighbourDistance < particles[j].nearestNeighbourDistance){
+					
+					handleElasticCollision(i, j, particles[i].nearestNeighbour);
+					
+				}
+				
+			}
+			
+		}
+		
+		else{
+			
+			if(particles[i].nearestNeighbourDistance < particles[j].nearestNeighbourDistance){
+				
+				handleElasticCollision(i, j, particles[i].nearestNeighbour);
+				
+			}
+			
+		}
+		
+	}
+	
+	else{
+		
+		
+		
+	}
+	
+	*/
+	
+}
+
+// If particles are touching each other, we need to decide what to do with each 
 static inline void handleParticleInteraction(){ // new name, suits it better
 	
 	// check for collision with other particles
 	if(options->ENABLE_PARTICLE_COLLISION){
 			
 		// loop through all particles checking for collision
+		// then updating their closest neighbours
 		for(int i = 0; i < length; i++){
 			
-			//check if this particle is being collided
+			// we need to check if the particle is colliding with anything
 			char hasCollided = 0;
-			
-			// Particles are lazy, they take the shortest path possible. Therefore, 
-			// they only react to the strongest force being acted on them. In other words, particles will only
-			// collide away from the closest one they are colliding with.
-			double lowestDistance = -1.0;
-			
-			// the particle that we will be colliding away from
-			int lowestDistanceParticle = -1;
 			
 			for(int j = 0; j < length; j++){
 			
 				if(i != j){
 					
+					// particles that are bonded do not act on any force against each other, they simply
+					// behave as one big, with mass equal to the sum of the two particles, FOR NOW.....
 					if(particles[i].bondingWith == j){
 						
 						continue;
@@ -949,19 +1070,18 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 					// getting the distance with good old Pythagoras' Theorem
 					double distance = sqrt((((xa - xb) * (xa - xb)) + ((ya - yb) * (ya - yb))));
 					
-					if(lowestDistance < 0.0){
-						
-						lowestDistance = distance;
-						
-					}
-					
-					// when red and blue particles bond, their velocities become the average
-					double avgVelX, avgVelY;
-					
 					// check if the distance between them is
 					// less than their radiuses combined
 					// the + 1 is for floating point error
 					if(distance < (radiusA + radiusB + 1.0)){
+						
+						hasCollided = 1;
+						
+						if(particles[i].nearestNeighbour == -1){
+							
+							particles[i].nearestNeighbourDistance = radiusA + radiusB + 2.0;
+							
+						}
 						
 						switch (particles[i].type){
 						
@@ -969,35 +1089,29 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 								
 								if(particles[j].type == red_particle){
 									
-									if(distance < lowestDistance){
+									if(distance < particles[i].nearestNeighbourDistance){
 										
-										lowestDistance = distance;
-										
-										lowestDistanceParticle = j;
-										
-										hasCollided = 1;
+										particles[i].nearestNeighbourDistance = distance;
+										particles[i].nearestNeighbour = j;
 										
 									}
 									
 								}
 								
-								if(particles[j].type == blue_particle){
+								else if(particles[j].type == blue_particle){
 									
 									if((particles[i].bondingWith == -1) && (particles[j].bondingWith == -1)){
 										
-										goto bond;
+										handleRedBlueBond(i, j);
 										
 									}
 									
 									else{
 										
-										if(distance < lowestDistance){
+										if(distance < particles[i].nearestNeighbourDistance){
 											
-											lowestDistance = distance;
-											
-											lowestDistanceParticle = j;
-											
-											hasCollided = 1;
+											particles[i].nearestNeighbourDistance = distance;
+											particles[i].nearestNeighbour = j;
 											
 										}
 										
@@ -1011,35 +1125,29 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 								
 								if(particles[j].type == blue_particle){
 									
-									if(distance < lowestDistance){
+									if(distance < particles[i].nearestNeighbourDistance){
 										
-										lowestDistance = distance;
-										
-										lowestDistanceParticle = j;
-										
-										hasCollided = 1;
+										particles[i].nearestNeighbourDistance = distance;
+										particles[i].nearestNeighbour = j;
 										
 									}
-									
+										
 								}
 								
-								if(particles[j].type == red_particle){
+								else if(particles[j].type == red_particle){
 									
 									if((particles[i].bondingWith == -1) && (particles[j].bondingWith == -1)){
 										
-										goto bond;
+										handleRedBlueBond(i, j);
 										
 									}
 									
 									else{
 										
-										if(distance < lowestDistance){
+										if(distance < particles[i].nearestNeighbourDistance){
 											
-											lowestDistance = distance;
-											
-											lowestDistanceParticle = j;
-											
-											hasCollided = 1;
+											particles[i].nearestNeighbourDistance = distance;
+											particles[i].nearestNeighbour = j;
 											
 										}
 										
@@ -1069,28 +1177,6 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 						
 						continue;
 						
-						// red-blue particles bonding
-						bond:
-						
-						// the new velocities of the particles will be the average of both old ones
-						avgVelX = (particles[i].velocityX + particles[j].velocityX) / 2.0;
-						avgVelY = (particles[i].velocityY + particles[j].velocityY) / 2.0;
-						
-						particles[i].velocityX = avgVelX;
-						particles[i].velocityY = avgVelY;
-						particles[j].velocityX = avgVelX;
-						particles[j].velocityY = avgVelY;
-						
-						double temp = particles[i].mass;
-						
-						particles[i].mass += particles[j].mass + particles[j].mass;
-						particles[j].mass += temp + temp;
-						
-						particles[i].bondingWith = j;
-						particles[j].bondingWith = i;
-						
-						continue;
-						
 					}
 					
 				}
@@ -1099,55 +1185,13 @@ static inline void handleParticleInteraction(){ // new name, suits it better
 			
 			if(hasCollided == 0){
 				
-				if(particles[i].bondingWith > -1){
-					
-					if(particles[particles[i].bondingWith].collidingWith == -1){
-						
-						particles[i].collidingWith = -1;
-						particles[particles[i].bondingWith].collidingWith = -1;
-						
-					}
-					
-				}
-				
-				else{
-					
-					particles[i].collidingWith = -1;
-					
-					
-				}
-				
-			}
-			
-			else{
-				
-				if((particles[i].collidingWith == -1) && (particles[lowestDistanceParticle].collidingWith == -1)){
-					
-					particles[i].collidingWith = lowestDistanceParticle;
-					particles[lowestDistanceParticle].collidingWith = i;
-					
-					// we also want to move the particles' bonded particles
-					if(particles[i].bondingWith > -1){
-						
-						particles[particles[i].bondingWith].collidingWith = lowestDistanceParticle;
-						
-					}
-					
-					if(particles[lowestDistanceParticle].bondingWith > -1){
-						
-						particles[particles[lowestDistanceParticle].bondingWith].collidingWith = i;
-						
-					}
-					
-					// change ONLY the velocities for both particles
-					handleElasticCollision(i, lowestDistanceParticle, lowestDistance);
-					
-				}
+				particles[i].nearestNeighbour = -1;
 				
 			}
 			
 		}
 		
+		handleCollision();
 		
 	}
 	
@@ -1198,7 +1242,7 @@ static inline void updateParticles(){
 				
 				particles[particleNum].velocityX -= ((particles[particleNum].velocityX / speed) * speedToReduce);
 				
-				if((zero && (particles[particleNum].velocityX < 0.0)) || (!zero && (particles[particleNum].velocityX > 0.0))){
+				if((zero && (particles[particleNum].velocityX < 0.0)) || ((zero == 0) && (particles[particleNum].velocityX > 0.0))){
 					
 					particles[particleNum].velocityX = 0.0;
 					
@@ -1210,7 +1254,7 @@ static inline void updateParticles(){
 				
 				particles[particleNum].velocityY -= ((particles[particleNum].velocityY / speed) * speedToReduce);
 				
-				if((zero && (particles[particleNum].velocityY < 0.0)) || (!zero && (particles[particleNum].velocityY > 0.0))){
+				if((zero && (particles[particleNum].velocityY < 0.0)) || ((zero == 0) && (particles[particleNum].velocityY > 0.0))){
 					
 					particles[particleNum].velocityY = 0.0;
 					
@@ -1663,6 +1707,8 @@ static inline void drawParticles(){
 int main(int argc, char** argv){
 	
 	debug = fopen("debug.txt", "w");
+	
+	fprintf(debug, "Size of a particle: %d bytes", sizeof(particle));
 	
 	// allocate memory for the options
 	options = malloc(sizeof(configOptions));

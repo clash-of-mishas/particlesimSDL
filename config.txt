@@ -15,7 +15,7 @@
 MAX_PARTICLE_COUNT 2
 
 # The maximum and minimum speed of particles to start with, in pixels per second
-MAX_PARTICLE_SPEED 1000
+MAX_PARTICLE_SPEED 200
 MIN_PARTICLE_SPEED 0
 
 # The maximum amount of direction relative to 0 degree to start at
@@ -27,7 +27,7 @@ MAX_DIRECTION 360
 
 # If enabled, the program will stop when each frame takes 
 # longer than MAX_BENCHMARK_SPF seconds to render and write to a file
-#ENABLE_BENCHMARK
+ENABLE_BENCHMARK
 MAX_BENCHMARK_SPF 1
 
 # Add particles each frame
