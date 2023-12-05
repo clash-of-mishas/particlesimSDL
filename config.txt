@@ -98,4 +98,4 @@ WINDOW_HEIGHT 720
 # loses with time (ie, slowing down). More massive particles have
 # more energy, so their magnitudes (speed) decreases at a slower rate.
 # In units of 1 mass/pixels/sec
-FRICTION 0.0001
+FRICTION 0.001

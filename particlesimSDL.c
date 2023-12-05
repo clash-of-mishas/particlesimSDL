@@ -105,7 +105,7 @@ typedef struct particle {
 	int nearestNeighbour;
 	double nearestNeighbourDistance;
 	
-	int lastNearestNeighbour;
+	int collidingAwayFrom;
 	
 	int bondingWith;
 	
@@ -712,7 +712,7 @@ static inline void generateRandomParticles(int x, int y){
 		particles[i].nearestNeighbour = -1;
 		particles[i].nearestNeighbourDistance = 0.0;
 		
-		particles[i].lastNearestNeighbour = -1;
+		particles[i].collidingAwayFrom = -1;
 		
 		particles[i].bondingWith = -1;
 
@@ -742,13 +742,13 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
 					particles[particleNum].nearestNeighbour = -1;
-					particles[particleNum].lastNearestNeighbour = -1;
+					particles[particleNum].collidingAwayFrom = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityX = -particles[particles[particleNum].bondingWith].velocityX;
 						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
-						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].collidingAwayFrom = -1;
 						
 					}
 					
@@ -769,13 +769,13 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityX = -particles[particleNum].velocityX;
 					particles[particleNum].nearestNeighbour = -1;
-					particles[particleNum].lastNearestNeighbour = -1;
+					particles[particleNum].collidingAwayFrom = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityX = -particles[particles[particleNum].bondingWith].velocityX;
 						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
-						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].collidingAwayFrom = -1;
 						
 					}
 					
@@ -796,13 +796,13 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
 					particles[particleNum].nearestNeighbour = -1;
-					particles[particleNum].lastNearestNeighbour = -1;
+					particles[particleNum].collidingAwayFrom = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityY = -particles[particles[particleNum].bondingWith].velocityY;
 						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
-						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].collidingAwayFrom = -1;
 						
 					}
 					
@@ -823,13 +823,13 @@ static inline void handleBorderCollision(){
 					
 					particles[particleNum].velocityY = -particles[particleNum].velocityY;
 					particles[particleNum].nearestNeighbour = -1;
-					particles[particleNum].lastNearestNeighbour = -1;
+					particles[particleNum].collidingAwayFrom = -1;
 					
 					if(particles[particleNum].bondingWith > -1){
 						
 						particles[particles[particleNum].bondingWith].velocityY = -particles[particles[particleNum].bondingWith].velocityY;
 						particles[particles[particleNum].bondingWith].nearestNeighbour = -1;
-						particles[particles[particleNum].bondingWith].lastNearestNeighbour = -1;
+						particles[particles[particleNum].bondingWith].collidingAwayFrom = -1;
 						
 					}
 					
@@ -955,13 +955,13 @@ static inline void handleCollision(){
 		// both particles aren't bonded, but we still need to check if the other particle is closer to another.
 		if((particles[i].bondingWith == -1) && (particles[particles[i].nearestNeighbour].bondingWith == -1)){
 			
-			if(particles[i].lastNearestNeighbour != particles[i].nearestNeighbour){
+			//if(i == 0) fprintf(debug, "particle 1 - nearestNeighbour = %d, distance = %d, nearestNeighbour's nearestNeighbour = %d", );
+			
+			if(particles[i].collidingAwayFrom != particles[i].nearestNeighbour){
 				
 				handleElasticCollision(i, particles[i].nearestNeighbour, particles[i].nearestNeighbourDistance);
 				
-				particles[i].lastNearestNeighbour = particles[i].nearestNeighbour;
-				
-				//particles[particles[i].nearestNeighbour].lastNearestNeighbour = i;
+				particles[i].collidingAwayFrom = particles[i].nearestNeighbour;
 				
 			}
 			
@@ -1706,9 +1706,7 @@ static inline void drawParticles(){
 
 int main(int argc, char** argv){
 	
-	debug = fopen("debug.txt", "w");
-	
-	fprintf(debug, "Size of a particle: %d bytes", sizeof(particle));
+	debug = fopen("debug.txt", "w"); 
 	
 	// allocate memory for the options
 	options = malloc(sizeof(configOptions));
